@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Optimizer - Save Time Visiting Multiple Places</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        header h1 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        header p {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            height: fit-content;
+        }
+        .section-title {
+            font-size: 1rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .address-list {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        .address-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+        .address-item .number {
+            width: 24px;
+            height: 24px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .address-item .text {
+            flex: 1;
+            color: #2c3e50;
+        }
+        .address-item .remove {
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0 5px;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #219a52;
+        }
+        .btn-secondary {
+            background: #ecf0f1;
+            color: #2c3e50;
+        }
+        .btn-secondary:hover {
+            background: #dfe6e9;
+        }
+        .map-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        #map {
+            height: 500px;
+            border-radius: 8px;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f6f3;
+            border-radius: 8px;
+            display: none;
+        }
+        .results.show {
+            display: block;
+        }
+        .results h3 {
+            color: #1e8449;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        .results p {
+            color: #2c3e50;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        .route-list {
+            margin-top: 15px;
+        }
+        .route-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 0.85rem;
+        }
+        .route-item:not(:last-child) {
+            border-bottom: 1px solid #d5dbdb;
+        }
+        .route-item .step {
+            width: 24px;
+            height: 24px;
+            background: #27ae60;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        .route-leg-info {
+            padding: 4px 0 8px 34px;
+            color: #7f8c8d;
+            font-size: 0.8rem;
+        }
+        .traffic-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+        .traffic-green { background: #d5f5e3; color: #1e8449; }
+        .traffic-yellow { background: #fef9e7; color: #9a7d0a; }
+        .traffic-red { background: #fadbd8; color: #c0392b; }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Route Optimizer</h1>
+            <p>Save time by finding the best route with real-time traffic data</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h2 class="section-title">Add Locations</h2>
+                <div class="input-group">
+                    <label>Starting Point (Optional)</label>
+                    <input type="text" id="startAddress" placeholder="Enter starting address">
+                </div>
+                <div class="input-group">
+                    <label>Destination (Optional)</label>
+                    <input type="text" id="endAddress" placeholder="Enter destination address">
+                </div>
+                <div class="input-group">
+                    <label>Waypoints (Addresses to Visit)</label>
+                    <input type="text" id="waypointInput" placeholder="Enter address">
+                </div>
+                <button class="btn btn-secondary" onclick="addWaypoint()">+ Add Waypoint</button>
+                
+                <div class="address-list" id="addressList"></div>
+                
+                <div class="input-group">
+                    <label>Optimization Priority</label>
+                    <select id="optimizationMode">
+                        <option value="time">Shortest Travel Time</option>
+                        <option value="distance">Shortest Distance</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-primary" onclick="optimizeRoute()">Optimize Route</button>
+                <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
+            </div>
+            
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="results" id="results">
+                    <h3>Optimized Route Summary</h3>
+                    <p id="totalDistance"></p>
+                    <p id="totalTime"></p>
+                    <div class="route-list" id="routeList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'AIzaSyBOGxIR4LbxsFDHNkVGa_U1l7kSb8iWYks';
+        let map;
+        let directionsService;
+        let directionsRenderer;
+        let geocoder;
+        let distanceMatrixService;
+        let markers = [];
+        let waypointCount = 0;
+        let waypoints = [];
+        let startPoint = null;
+        let endPoint = null;
+        let durationMatrix = null;
+        let distanceMatrix = null;
+
+        function initMap() {
+            try {
+                map = new google.maps.Map(document.getElementById('map'), {
+                    center: { lat: 39.8283, lng: -98.5795 },
+                    zoom: 4,
+                    mapTypeId: 'roadmap'
+                });
+
+                directionsService = new google.maps.DirectionsService();
+                distanceMatrixService = new google.maps.DistanceMatrixService();
+                directionsRenderer = new google.maps.DirectionsRenderer({
+                    map: map,
+                    suppressMarkers: true,
+                    polylineOptions: {
+                        strokeColor: '#3498db',
+                        strokeWeight: 4
+                    }
+                });
+
+                geocoder = new google.maps.Geocoder();
+            } catch (error) {
+                console.error('Error initializing Google Maps:', error);
+                document.getElementById('map').innerHTML = '<div style="padding: 20px; text-align: center;"><h3 style="color: #e74c3c;">Google Maps Error</h3><p style="color: #7f8c8d;">Unable to load Google Maps. Please check the API key and ensure all required APIs are enabled.</p><p style="color: #7f8c8d; font-size: 0.85rem; margin-top: 10px;">Required APIs: Maps JavaScript API, Directions API, Distance Matrix API, Geocoding API</p></div>';
+            }
+        }
+
+        function geocodeAddress(address) {
+            return new Promise((resolve, reject) => {
+                geocoder.geocode({ address: address }, (results, status) => {
+                    if (status === 'OK' && results && results.length > 0) {
+                        const location = results[0].geometry.location;
+                        resolve({ 
+                            lat: location.lat(), 
+                            lng: location.lng(),
+                            formattedAddress: results[0].formatted_address
+                        });
+                    } else {
+                        resolve(null);
+                    }
+                });
+            });
+        }
+
+        async function addWaypoint() {
+            const input = document.getElementById('waypointInput');
+            const address = input.value.trim();
+            
+            if (address) {
+                const coords = await geocodeAddress(address);
+                if (coords) {
+                    waypointCount++;
+                    const displayNumber = waypointCount;
+                    waypoints.push({ 
+                        address: address, 
+                        lat: coords.lat, 
+                        lng: coords.lng, 
+                        isWaypoint: true 
+                    });
+                    addMarker(coords.lat, coords.lng, address, displayNumber);
+                    updateAddressList();
+                } else {
+                    alert(`Could not find address: ${address}`);
+                }
+                input.value = '';
+            }
+        }
+
+        function updateAddressList() {
+            const list = document.getElementById('addressList');
+            list.innerHTML = waypoints.map((wp, index) => `
+                <div class="address-item">
+                    <span class="number">${index}</span>
+                    <span class="text">${wp.address}</span>
+                    <span class="remove" onclick="removeAddress(${index})">×</span>
+                </div>
+            `).join('');
+        }
+
+        function removeAddress(index) {
+            clearMap();
+            waypoints.splice(index, 1);
+            waypointCount--;
+            updateAddressList();
+            waypoints.forEach((wp, i) => {
+                addMarker(wp.lat, wp.lng, wp.address, i + 1);
+            });
+        }
+
+        function addMarker(lat, lng, address, number) {
+            const marker = new google.maps.Marker({
+                position: { lat: lat, lng: lng },
+                map: map,
+                label: {
+                    text: number.toString(),
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                },
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 15,
+                    fillColor: '#3498db',
+                    fillOpacity: 1,
+                    strokeColor: 'white',
+                    strokeWeight: 2
+                }
+            });
+            marker.addListener('click', () => {
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `<div style="font-size: 14px;"><b>Stop ${number}</b><br>${address}</div>`
+                });
+                infoWindow.open(map, marker);
+            });
+            markers.push(marker);
+        }
+
+        function clearMap() {
+            markers.forEach(m => m.setMap(null));
+            markers = [];
+            if (directionsRenderer) {
+                directionsRenderer.setDirections({ routes: [] });
+            }
+        }
+
+        function clearAll() {
+            waypoints = [];
+            waypointCount = 0;
+            startPoint = null;
+            endPoint = null;
+            durationMatrix = null;
+            distanceMatrix = null;
+            updateAddressList();
+            clearMap();
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('startAddress').value = '';
+            document.getElementById('endAddress').value = '';
+            document.getElementById('waypointInput').value = '';
+        }
+
+        async function getDistanceMatrix(allPoints) {
+            const origins = allPoints.map(p => new google.maps.LatLng(p.lat, p.lng));
+            const destinations = allPoints.map(p => new google.maps.LatLng(p.lat, p.lng));
+
+            return new Promise((resolve, reject) => {
+                const request = {
+                    origins: origins,
+                    destinations: destinations,
+                    travelMode: google.maps.TravelMode.DRIVING,
+                    drivingOptions: {
+                        departureTime: new Date(),
+                        trafficModel: google.maps.TrafficModel.BEST_GUESS
+                    },
+                    unitSystem: google.maps.UnitSystem.METRIC
+                };
+
+                distanceMatrixService.getDistanceMatrix(request, (response, status) => {
+                    if (status === 'OK' && response && response.rows) {
+                        const durations = [];
+                        const distances = [];
+                        
+                        response.rows.forEach(row => {
+                            const rowDurations = [];
+                            const rowDistances = [];
+                            row.elements.forEach(element => {
+                                if (element.status === 'OK') {
+                                    rowDurations.push(element.duration.value);
+                                    rowDistances.push(element.distance.value);
+                                } else {
+                                    rowDurations.push(null);
+                                    rowDistances.push(null);
+                                }
+                            });
+                            durations.push(rowDurations);
+                            distances.push(rowDistances);
+                        });
+                        
+                        resolve({ durations, distances });
+                    } else {
+                        resolve(null);
+                    }
+                });
+            });
+        }
+
+        function nearestNeighborFromPoint(startIdx, points, durationMatrix) {
+            const visitedIndices = [startIdx];
+            const unvisitedIndices = points.map((_, i) => i).filter(i => i !== startIdx);
+            
+            while (unvisitedIndices.length > 0) {
+                const lastIdx = visitedIndices[visitedIndices.length - 1];
+                let nearestIdx = -1;
+                let nearestDuration = Infinity;
+                
+                for (const idx of unvisitedIndices) {
+                    const duration = durationMatrix[lastIdx][idx];
+                    if (duration !== null && duration < nearestDuration) {
+                        nearestDuration = duration;
+                        nearestIdx = idx;
+                    }
+                }
+                
+                if (nearestIdx >= 0) {
+                    visitedIndices.push(nearestIdx);
+                    unvisitedIndices.splice(unvisitedIndices.indexOf(nearestIdx), 1);
+                } else {
+                    break;
+                }
+            }
+            
+            return visitedIndices;
+        }
+
+        function twoOptOptimization(routeIndices, durationMatrix, startIndex, endIndex) {
+            let improved = true;
+            let bestRoute = [...routeIndices];
+            
+            while (improved) {
+                improved = false;
+                
+                for (let i = 0; i < bestRoute.length - 1; i++) {
+                    for (let j = i + 2; j < bestRoute.length; j++) {
+                        if (j === bestRoute.length - 1 && i === 0) continue;
+                        
+                        const newRoute = [...bestRoute];
+                        const segment = newRoute.slice(i + 1, j + 1).reverse();
+                        newRoute.splice(i + 1, segment.length, ...segment);
+                        
+                        const oldDuration = calculateRouteDuration(bestRoute, durationMatrix, startIndex, endIndex);
+                        const newDuration = calculateRouteDuration(newRoute, durationMatrix, startIndex, endIndex);
+                        
+                        if (newDuration < oldDuration) {
+                            bestRoute = newRoute;
+                            improved = true;
+                        }
+                    }
+                }
+            }
+            
+            return bestRoute;
+        }
+        
+        function calculateRouteDuration(routeIndices, durationMatrix, startIndex, endIndex) {
+            let total = 0;
+            
+            let previousIdx = startIndex;
+            
+            for (let i = 0; i < routeIndices.length; i++) {
+                const currentIdx = routeIndices[i];
+                if (durationMatrix[previousIdx][currentIdx] !== null) {
+                    total += durationMatrix[previousIdx][currentIdx];
+                }
+                previousIdx = currentIdx;
+            }
+            
+            if (endPoint !== null && durationMatrix[previousIdx][endIndex] !== null) {
+                total += durationMatrix[previousIdx][endIndex];
+            }
+            
+            return total;
+        }
+        
+        function optimizeWaypointsOnly(startPoint, waypoints, endPoint, durationMatrix) {
+            if (waypoints.length <= 1) return waypoints;
+            
+            const waypointMatrixIndices = waypoints.map((_, i) => i + (startPoint ? 1 : 0));
+            const startIndex = startPoint ? 0 : null;
+            const endIndex = endPoint ? durationMatrix.length - 1 : null;
+            
+            let bestRouteIndices = null;
+            let bestDuration = Infinity;
+            
+            for (let i = 0; i < waypointMatrixIndices.length; i++) {
+                const routeWaypointIndices = [waypointMatrixIndices[i]];
+                const remainingIndices = waypointMatrixIndices.filter(idx => idx !== waypointMatrixIndices[i]);
+                
+                let currentIdx = waypointMatrixIndices[i];
+                
+                while (remainingIndices.length > 0) {
+                    let nearestIdx = -1;
+                    let nearestDuration = Infinity;
+                    
+                    for (const idx of remainingIndices) {
+                        const duration = durationMatrix[currentIdx][idx];
+                        if (duration !== null && duration < nearestDuration) {
+                            nearestDuration = duration;
+                            nearestIdx = idx;
+                        }
+                    }
+                    
+                    if (nearestIdx >= 0) {
+                        routeWaypointIndices.push(nearestIdx);
+                        currentIdx = nearestIdx;
+                        remainingIndices.splice(remainingIndices.indexOf(nearestIdx), 1);
+                    } else {
+                        break;
+                    }
+                }
+                
+                const totalDuration = calculateRouteDuration(routeWaypointIndices, durationMatrix, startIndex, endIndex);
+                
+                if (totalDuration < bestDuration) {
+                    bestDuration = totalDuration;
+                    bestRouteIndices = routeWaypointIndices;
+                }
+            }
+            
+            const optimizedRoute = twoOptOptimization(bestRouteIndices, durationMatrix, startIndex, endIndex);
+            
+            return optimizedRoute.map(matrixIdx => ({ 
+                ...waypoints[matrixIdx - (startPoint ? 1 : 0)], 
+                matrixIndex: matrixIdx 
+            }));
+        }
+
+        async function displayRoute(optimized, durationMatrix, distanceMatrix) {
+            const waypointLocations = optimized.map(p => ({ location: { lat: p.lat, lng: p.lng } }));
+            
+            if (optimized.length >= 2) {
+                const request = {
+                    origin: waypointLocations[0].location,
+                    destination: waypointLocations[waypointLocations.length - 1].location,
+                    waypoints: waypointLocations.slice(1, -1),
+                    travelMode: google.maps.TravelMode.DRIVING,
+                    drivingOptions: {
+                        departureTime: new Date(),
+                        trafficModel: google.maps.TrafficModel.BEST_GUESS
+                    },
+                    optimizeWaypoints: false,
+                    provideRouteAlternatives: false
+                };
+
+                directionsService.route(request, (response, status) => {
+                    if (status === 'OK' && response && response.routes && response.routes.length > 0) {
+                        directionsRenderer.setDirections(response);
+                        const bounds = new google.maps.LatLngBounds();
+                        optimized.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
+                        map.fitBounds(bounds);
+                    }
+                });
+            }
+
+            let totalDuration = 0;
+            let totalDistance = 0;
+            
+            for (let i = 0; i < optimized.length - 1; i++) {
+                const idx1 = optimized[i].matrixIndex;
+                const idx2 = optimized[i + 1].matrixIndex;
+                
+                if (durationMatrix[idx1][idx2] !== null) {
+                    totalDuration += durationMatrix[idx1][idx2];
+                    totalDistance += distanceMatrix[idx1][idx2];
+                }
+            }
+
+            const hours = Math.floor(totalDuration / 3600);
+            const minutes = Math.floor((totalDuration % 3600) / 60);
+            const timeStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+            const distanceStr = (totalDistance / 1000).toFixed(1);
+            
+            let routeDetails = '';
+            for (let i = 0; i < optimized.length - 1; i++) {
+                const current = optimized[i];
+                const next = optimized[i + 1];
+                
+                const idx1 = current.matrixIndex;
+                const idx2 = next.matrixIndex;
+                
+                let duration = 0;
+                let distance = 0;
+                let durationInTraffic = 0;
+                let trafficClass = 'traffic-green';
+                
+                if (durationMatrix[idx1][idx2] !== null) {
+                    duration = durationMatrix[idx1][idx2];
+                    distance = distanceMatrix[idx1][idx2];
+                    durationInTraffic = duration;
+                }
+                
+                const durHours = Math.floor(durationInTraffic / 3600);
+                const durMinutes = Math.floor((durationInTraffic % 3600) / 60);
+                const durStr = durHours > 0 ? `${durHours}h ${durMinutes}m` : `${durMinutes}m`;
+                
+                routeDetails += `
+                    <div class="route-item">
+                        <span class="step">${i}</span>
+                        <span>${current.address}</span>
+                    </div>
+                    <div class="route-leg-info">
+                        ↓ ${(distance / 1000).toFixed(1)} km, ${durStr} <span class="traffic-badge ${trafficClass}">Live Traffic</span>
+                    </div>
+                `;
+            }
+            
+            routeDetails += `
+                <div class="route-item">
+                    <span class="step">${optimized.length - 1}</span>
+                    <span>${optimized[optimized.length - 1].address}</span>
+                </div>
+            `;
+            
+            const resultsHTML = `
+                <h3 style="margin-bottom: 10px; color: #1e8449;">Optimized Route Summary</h3>
+                <p style="margin-bottom: 5px;"><strong>Total Distance:</strong> ${distanceStr} km</p>
+                <p style="margin-bottom: 15px;"><strong>Total Travel Time:</strong> ${timeStr} <span class="traffic-badge traffic-green">with live traffic</span></p>
+                <div class="route-list">
+                    ${routeDetails}
+                </div>
+            `;
+            
+            document.getElementById('results').innerHTML = resultsHTML;
+            document.getElementById('results').classList.add('show');
+        }
+
+        async function optimizeRoute() {
+            if (waypoints.length < 2) {
+                alert('Please add at least 2 waypoints to optimize');
+                return;
+            }
+
+            clearMap();
+            document.getElementById('results').innerHTML = '<div class="loading">Optimizing route with real-time traffic data...</div>';
+            document.getElementById('results').classList.add('show');
+            
+            let startAddr = document.getElementById('startAddress').value.trim();
+            let endAddr = document.getElementById('endAddress').value.trim();
+            
+            if (startAddr) {
+                const coords = await geocodeAddress(startAddr);
+                if (coords) {
+                    startPoint = { address: startAddr, lat: coords.lat, lng: coords.lng, isWaypoint: false };
+                }
+            }
+            
+            if (endAddr) {
+                const coords = await geocodeAddress(endAddr);
+                if (coords) {
+                    endPoint = { address: endAddr, lat: coords.lat, lng: coords.lng, isWaypoint: false };
+                }
+            }
+            
+            let allPoints = [...waypoints];
+            if (startPoint) allPoints.unshift(startPoint);
+            if (endPoint) allPoints.push(endPoint);
+            
+            const matrixData = await getDistanceMatrix(allPoints);
+            
+            if (!matrixData) {
+                document.getElementById('results').innerHTML = '<p style="color: red;">Error fetching route data from Distance Matrix API. Please try again.</p>';
+                return;
+            }
+            
+            durationMatrix = matrixData.durations;
+            distanceMatrix = matrixData.distances;
+            
+            let optimized;
+            
+            if (startPoint || endPoint) {
+                const waypointsToOptimize = startPoint && endPoint 
+                    ? allPoints.slice(1, -1) 
+                    : startPoint 
+                        ? allPoints.slice(1) 
+                        : allPoints.slice(0, -1);
+                
+                const optimizedWaypoints = optimizeWaypointsOnly(startPoint, waypointsToOptimize, endPoint, durationMatrix);
+                
+                optimized = [];
+                if (startPoint) optimized.push({ ...startPoint, matrixIndex: 0 });
+                optimized = optimized.concat(optimizedWaypoints);
+                if (endPoint) optimized.push({ ...endPoint, matrixIndex: allPoints.length - 1 });
+            } else {
+                optimized = allPoints.map((p, i) => ({ ...p, matrixIndex: i }));
+            }
+            
+            optimized.forEach((wp, i) => {
+                addMarker(wp.lat, wp.lng, wp.address, i);
+            });
+            
+            try {
+                await displayRoute(optimized, durationMatrix, distanceMatrix);
+            } catch (error) {
+                console.error('Error displaying route:', error);
+                document.getElementById('results').innerHTML = `<p style="color: red;">Error displaying route: ${error.message}</p>`;
+            }
+        }
+
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBOGxIR4LbxsFDHNkVGa_U1l7kSb8iWYks&callback=initMap"></script>
+</body>
+</html>
