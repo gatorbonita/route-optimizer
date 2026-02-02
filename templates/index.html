@@ -540,16 +540,51 @@
             return bestRoute;
         }
         
-        function calculateRouteDuration(routeIndices, durationMatrix, startIndex, endIndex) {
+        function calculateRouteDuration(allPoints, routeIndices, durationMatrix, hasStartPoint) {
             let total = 0;
+            let previousIdx = hasStartPoint ? 0 : routeIndices[0];
             
-            let previousIdx = startIndex;
-            
-            for (let i = 0; i < routeIndices.length; i++) {
+            for (let i = (hasStartPoint ? 0 : 1); i < routeIndices.length; i++) {
                 const currentIdx = routeIndices[i];
                 if (durationMatrix[previousIdx][currentIdx] !== null) {
                     total += durationMatrix[previousIdx][currentIdx];
                 }
+                previousIdx = currentIdx;
+            }
+            
+            return total;
+        }
+        
+        function twoOptSimple(routeIndices, durationMatrix) {
+            let improved = true;
+            let bestRoute = [...routeIndices];
+            let iterations = 0;
+            
+            while (improved && iterations < 100) {
+                improved = false;
+                iterations++;
+                
+                for (let i = 0; i < bestRoute.length - 1; i++) {
+                    for (let j = i + 2; j < bestRoute.length; j++) {
+                        if (j === bestRoute.length - 1 && i === 0) continue;
+                        
+                        const newRoute = [...bestRoute];
+                        const segment = newRoute.slice(i, j + 1).reverse();
+                        newRoute.splice(i, segment.length, ...segment);
+                        
+                        const oldDuration = calculateRouteDuration(routeIndices, bestRoute, durationMatrix, false);
+                        const newDuration = calculateRouteDuration(routeIndices, newRoute, durationMatrix, false);
+                        
+                        if (newDuration < oldDuration) {
+                            bestRoute = newRoute;
+                            improved = true;
+                        }
+                    }
+                }
+            }
+            
+            return bestRoute;
+        }
                 previousIdx = currentIdx;
             }
             
@@ -712,28 +747,70 @@
             document.getElementById('results').classList.add('show');
         }
 
-        function optimizeWithStartOnly(startPoint, waypoints, durationMatrix) {
-            if (waypoints.length <= 1) return waypoints.map((p, i) => ({ ...p, matrixIndex: i + 1 }));
+        function optimizeWithBoth(waypoints, durationMatrix) {
+            if (waypoints.length <= 1) return waypoints.map((p, i) => i);
+            
+            console.log('=== Optimize with Both Start and End ===');
+            console.log('Waypoints:', waypoints.map((w, i) => `${i}: ${w.address}`));
             
             let bestRoute = null;
             let bestDuration = Infinity;
+            const numWaypoints = waypoints.length;
             
-            const startPointIndex = 0;
-            const waypointIndices = waypoints.map((_, i) => i + 1);
-            
-            console.log('=== Optimize with Start Only ===');
-            console.log('Waypoints array:', waypoints);
-            console.log('Waypoints:', waypoints.map((w, i) => `${i}: ${w.address}`));
-            console.log('Duration Matrix:');
-            console.table(durationMatrix);
-            
-            for (let endIdx = 0; endIdx < waypoints.length; endIdx++) {
-                const endIndex = waypointIndices[endIdx];
-                const middleWaypointIndices = waypointIndices.filter(idx => idx !== endIndex);
+            for (let startIdx = 0; startIdx < numWaypoints; startIdx++) {
+                const remaining = Array.from({ length: numWaypoints }, (_, i) => i).filter(i => i !== startIdx);
+                let routeIndices = [startIdx];
+                let currentIdx = startIdx + 1;
                 
-                let routeIndices = [];
-                let currentIdx = startPointIndex;
-                const remaining = [...middleWaypointIndices];
+                while (remaining.length > 0) {
+                    let nearestIdx = -1;
+                    let nearestDuration = Infinity;
+                    
+                    for (const idx of remaining) {
+                        const duration = durationMatrix[currentIdx][idx + 1];
+                        if (duration !== null && duration < nearestDuration) {
+                            nearestDuration = duration;
+                            nearestIdx = idx;
+                        }
+                    }
+                    
+                    if (nearestIdx >= 0) {
+                        routeIndices.push(nearestIdx);
+                        currentIdx = nearestIdx + 1;
+                        remaining.splice(remaining.indexOf(nearestIdx), 1);
+                    } else {
+                        break;
+                    }
+                }
+                
+                const totalDuration = calculateRouteDuration(waypoints, routeIndices, durationMatrix, false);
+                
+                if (totalDuration < bestDuration) {
+                    bestDuration = totalDuration;
+                    bestRoute = routeIndices;
+                }
+            }
+            
+            console.log('Best route:', bestRoute, 'duration:', bestDuration + 's');
+            
+            return twoOptSimple(bestRoute, durationMatrix);
+        }
+        
+        function optimizeWithEndOnly(waypoints, durationMatrix) {
+            if (waypoints.length <= 1) return waypoints.map((p, i) => i);
+            
+            console.log('=== Optimize with End Only ===');
+            console.log('Waypoints:', waypoints.map((w, i) => `${i}: ${w.address}`));
+            
+            let bestRoute = null;
+            let bestDuration = Infinity;
+            const numWaypoints = waypoints.length;
+            const endPointIndex = numWaypoints;
+            
+            for (let startIdx = 0; startIdx < numWaypoints; startIdx++) {
+                const remaining = Array.from({ length: numWaypoints }, (_, i) => i).filter(i => i !== startIdx);
+                let routeIndices = [startIdx];
+                let currentIdx = startIdx;
                 
                 while (remaining.length > 0) {
                     let nearestIdx = -1;
@@ -756,28 +833,67 @@
                     }
                 }
                 
-                const totalDuration = calculateRouteDuration(routeIndices, durationMatrix, startPointIndex, endIndex);
-                const testRoute = [...routeIndices, endIndex];
-                console.log(`Test ending at waypoint ${endIdx} (${waypoints[endIdx].address}): route=${testRoute}, duration=${totalDuration}s (${Math.round(totalDuration/60)}m)`);
+                const totalDuration = calculateRouteDuration(waypoints, routeIndices, durationMatrix, false) + 
+                                     (durationMatrix[currentIdx] ? durationMatrix[currentIdx][endPointIndex] || 0 : 0);
                 
                 if (totalDuration < bestDuration) {
                     bestDuration = totalDuration;
-                    bestRoute = [...routeIndices, endIndex];
+                    bestRoute = routeIndices;
                 }
             }
             
             console.log('Best route:', bestRoute, 'duration:', bestDuration + 's');
             
-            const optimizedRoute = twoOptOptimization(bestRoute, durationMatrix, startPointIndex, null);
-            console.log('After two-opt:', optimizedRoute, 'duration:', calculateRouteDuration(optimizedRoute, durationMatrix, startPointIndex, null) + 's');
+            return twoOptSimple(bestRoute, durationMatrix);
+        }
+        
+        function optimizeNoStartEnd(waypoints, durationMatrix) {
+            if (waypoints.length <= 2) return waypoints.map((p, i) => i);
             
-            const mapped = optimizedRoute.map(matrixIdx => ({
-                ...waypoints[matrixIdx - 1],
-                matrixIndex: matrixIdx
-            }));
-            console.log('Mapped waypoints:', mapped.map(m => m.address));
-            console.log('Mapped waypoint details:', mapped);
-            return mapped;
+            console.log('=== Optimize without Start/End ===');
+            console.log('Waypoints:', waypoints.map((w, i) => `${i}: ${w.address}`));
+            
+            let bestRoute = null;
+            let bestDuration = Infinity;
+            const numWaypoints = waypoints.length;
+            
+            for (let startIdx = 0; startIdx < numWaypoints; startIdx++) {
+                const remaining = Array.from({ length: numWaypoints }, (_, i) => i).filter(i => i !== startIdx);
+                let routeIndices = [startIdx];
+                let currentIdx = startIdx;
+                
+                while (remaining.length > 0) {
+                    let nearestIdx = -1;
+                    let nearestDuration = Infinity;
+                    
+                    for (const idx of remaining) {
+                        const duration = durationMatrix[currentIdx][idx];
+                        if (duration !== null && duration < nearestDuration) {
+                            nearestDuration = duration;
+                            nearestIdx = idx;
+                        }
+                    }
+                    
+                    if (nearestIdx >= 0) {
+                        routeIndices.push(nearestIdx);
+                        currentIdx = nearestIdx;
+                        remaining.splice(remaining.indexOf(nearestIdx), 1);
+                    } else {
+                        break;
+                    }
+                }
+                
+                const totalDuration = calculateRouteDuration(waypoints, routeIndices, durationMatrix, false);
+                
+                if (totalDuration < bestDuration) {
+                    bestDuration = totalDuration;
+                    bestRoute = routeIndices;
+                }
+            }
+            
+            console.log('Best route:', bestRoute, 'duration:', bestDuration + 's');
+            
+            return twoOptSimple(bestRoute, durationMatrix);
         }
         
         function optimizeWithEndOnly(waypoints, endPoint, durationMatrix) {
@@ -927,28 +1043,30 @@
             durationMatrix = matrixData.durations;
             distanceMatrix = matrixData.distances;
             
-            let optimized;
+            let waypointOrder = [];
             
             if (startPoint && endPoint) {
                 const waypointsToOptimize = allPoints.slice(1, -1);
-                const optimizedWaypoints = optimizeWaypointsOnly(startPoint, waypointsToOptimize, endPoint, durationMatrix);
-                optimized = [{ ...startPoint, matrixIndex: 0 }];
-                optimized = optimized.concat(optimizedWaypoints);
-                optimized.push({ ...endPoint, matrixIndex: allPoints.length - 1 });
+                waypointOrder = optimizeWithBoth(waypointsToOptimize, durationMatrix);
             } else if (startPoint && !endPoint) {
-                const optimizedWaypoints = optimizeWithStartOnly(startPoint, waypoints, durationMatrix);
-                console.log('Optimized waypoints from optimizeWithStartOnly:', optimizedWaypoints);
-                console.log('Optimized waypoints details:', optimizedWaypoints);
-                optimized = [{ ...startPoint, matrixIndex: 0 }];
-                optimized = optimized.concat(optimizedWaypoints);
-                console.log('Full route after concat:', optimized.map(o => `${o.matrixIndex}: ${o.address}`));
-                console.log('Full route details:', optimized);
+                waypointOrder = optimizeWithStartOnly(waypoints, durationMatrix);
             } else if (!startPoint && endPoint) {
-                const optimizedWaypoints = optimizeWithEndOnly(waypoints, endPoint, durationMatrix);
-                optimized = optimizedWaypoints;
-                optimized.push({ ...endPoint, matrixIndex: allPoints.length - 1 });
+                waypointOrder = optimizeWithEndOnly(waypoints, durationMatrix);
             } else {
-                optimized = optimizeNoStartEnd(waypoints, durationMatrix);
+                waypointOrder = optimizeNoStartEnd(waypoints, durationMatrix);
+            }
+            
+            console.log('Optimized waypoint order:', waypointOrder);
+            
+            optimized = [];
+            if (startPoint) {
+                optimized.push({ ...startPoint, matrixIndex: 0 });
+            }
+            waypointOrder.forEach(wpIndex => {
+                optimized.push({ ...waypoints[wpIndex], matrixIndex: wpIndex + (startPoint ? 1 : 0) });
+            });
+            if (endPoint) {
+                optimized.push({ ...endPoint, matrixIndex: allPoints.length - 1 });
             }
             
             optimized.forEach((wp, i) => {
@@ -957,7 +1075,6 @@
             
             console.log('=== FINAL OPTIMIZED ROUTE ===');
             console.log('Route:', optimized.map((wp, i) => `${i}: ${wp.address}`).join('\n'));
-            console.log('Matrix indices:', optimized.map(wp => wp.matrixIndex));
             
             let finalDuration = 0;
             let finalDistance = 0;
