@@ -42,6 +42,125 @@
             color: rgba(255, 255, 255, 0.9);
             font-size: 0.95rem;
         }
+
+        /* Sidebar collapse button for desktop */
+        .sidebar-toggle {
+            position: absolute;
+            top: 50%;
+            right: -15px;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 60px;
+            background: white;
+            border: none;
+            border-radius: 0 10px 10px 0;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #667eea;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+        .sidebar-toggle:hover {
+            background: #f8f9fa;
+        }
+        .sidebar.collapsed {
+            width: 0;
+            min-width: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .sidebar.collapsed .sidebar-toggle {
+            right: -30px;
+        }
+
+        /* Mobile tabs */
+        .mobile-tabs {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .mobile-tabs-container {
+            display: flex;
+            gap: 8px;
+        }
+        .mobile-tab {
+            flex: 1;
+            padding: 12px 8px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #7f8c8d;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .mobile-tab-icon {
+            font-size: 1.3rem;
+        }
+        .mobile-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Mobile bottom sheet for results */
+        .results-bottom-sheet {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+            max-height: 50vh;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        .results-bottom-sheet.show {
+            transform: translateY(0);
+        }
+        .bottom-sheet-handle {
+            width: 40px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 12px auto 8px;
+        }
+        .bottom-sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 20px 12px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .bottom-sheet-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #7f8c8d;
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+        }
+        .bottom-sheet-content {
+            overflow-y: auto;
+            max-height: calc(50vh - 80px);
+            padding: 15px 20px;
+        }
         .main-content {
             display: grid;
             grid-template-columns: 340px 1fr;
@@ -62,6 +181,8 @@
             flex-direction: column;
             overflow: hidden;
             height: 100%;
+            position: relative;
+            transition: all 0.3s ease;
         }
         .sidebar-content {
             flex: 1;
@@ -356,12 +477,88 @@
             }
         }
         @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+            header p {
+                font-size: 0.85rem;
+            }
+            header {
+                padding: 15px 0 10px;
+            }
+            .container {
+                padding: 0 12px;
+            }
             .main-content {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto 1fr;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .mobile-tabs {
+                display: block;
             }
             .sidebar {
-                max-height: 300px;
+                display: none;
+                max-height: none;
+                height: auto;
+                flex: 1;
+                min-height: 0;
+            }
+            .sidebar.mobile-active {
+                display: flex;
+            }
+            .sidebar-toggle {
+                display: none;
+            }
+            .map-container {
+                display: none;
+                height: 100%;
+                min-height: 400px;
+            }
+            .map-container.mobile-active {
+                display: block;
+            }
+            .results-panel {
+                display: none !important;
+            }
+            .results-bottom-sheet {
+                display: block;
+            }
+            /* Larger touch targets for mobile */
+            .btn {
+                padding: 14px;
+                font-size: 1rem;
+                margin-bottom: 10px;
+            }
+            .address-item .remove {
+                font-size: 1.5rem;
+                padding: 0 10px;
+                min-width: 44px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .toggle-btn {
+                padding: 12px 8px;
+            }
+            .input-group input {
+                padding: 12px 14px;
+                font-size: 1rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 8px;
+            }
+            header h1 {
+                font-size: 1.3rem;
+            }
+            .sidebar {
+                padding: 15px;
+            }
+            .map-container {
+                padding: 12px;
             }
         }
         .route-leg-info {
@@ -395,7 +592,28 @@
         </header>
         
         <div class="main-content">
-            <div class="sidebar">
+            <!-- Mobile tabs (hidden on desktop) -->
+            <div class="mobile-tabs">
+                <div class="mobile-tabs-container">
+                    <button class="mobile-tab active" onclick="switchMobileTab('locations')" id="tabLocations">
+                        <span class="mobile-tab-icon">📍</span>
+                        Locations
+                    </button>
+                    <button class="mobile-tab" onclick="switchMobileTab('map')" id="tabMap">
+                        <span class="mobile-tab-icon">🗺️</span>
+                        Map
+                    </button>
+                    <button class="mobile-tab" onclick="switchMobileTab('route')" id="tabRoute">
+                        <span class="mobile-tab-icon">🚀</span>
+                        Route
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar mobile-active">
+                <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle">
+                    ◀
+                </button>
                 <div class="sidebar-content">
                     <h2 class="section-title">Add Locations</h2>
                     <div class="input-group">
@@ -444,10 +662,20 @@
                 <div class="results" id="results"></div>
             </div>
         </div>
+
+        <!-- Mobile bottom sheet for results -->
+        <div class="results-bottom-sheet" id="resultsBottomSheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="bottom-sheet-header">
+                <h3 style="margin: 0; font-size: 1.1rem;">📍 Route Results</h3>
+                <button class="bottom-sheet-close" onclick="closeBottomSheet()">×</button>
+            </div>
+            <div class="bottom-sheet-content" id="resultsBottomSheetContent"></div>
+        </div>
     </div>
 
     <script>
-        // VERSION 2.0 - Cache buster
+        // VERSION 3.0 - Responsive Design with Mobile Support
         const API_KEY = 'AIzaSyBOGxIR4LbxsFDHNkVGa_U1l7kSb8iWYks';
         let map;
         let directionsService;
@@ -478,6 +706,82 @@
             }
         }
 
+        // Mobile tab switching
+        function switchMobileTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+
+            // Show/hide panels
+            const sidebar = document.querySelector('.sidebar');
+            const mapContainer = document.querySelector('.map-container');
+
+            sidebar.classList.remove('mobile-active');
+            mapContainer.classList.remove('mobile-active');
+
+            if (tab === 'locations') {
+                sidebar.classList.add('mobile-active');
+            } else if (tab === 'map') {
+                mapContainer.classList.add('mobile-active');
+                // Trigger map resize to fix display issues
+                if (map) {
+                    google.maps.event.trigger(map, 'resize');
+                }
+            } else if (tab === 'route') {
+                openBottomSheet();
+            }
+        }
+
+        // Sidebar collapse toggle for desktop
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+
+            sidebar.classList.toggle('collapsed');
+            toggle.textContent = sidebar.classList.contains('collapsed') ? '▶' : '◀';
+
+            // Trigger map resize
+            setTimeout(() => {
+                if (map) {
+                    google.maps.event.trigger(map, 'resize');
+                }
+            }, 300);
+        }
+
+        // Bottom sheet controls
+        function openBottomSheet() {
+            const bottomSheet = document.getElementById('resultsBottomSheet');
+            bottomSheet.classList.add('show');
+        }
+
+        function closeBottomSheet() {
+            const bottomSheet = document.getElementById('resultsBottomSheet');
+            bottomSheet.classList.remove('show');
+        }
+
+        // Check if mobile view
+        function isMobileView() {
+            return window.innerWidth <= 768;
+        }
+
+        // Update results in both desktop panel and mobile bottom sheet
+        function updateResults(htmlContent) {
+            const resultsDiv = document.getElementById('results');
+            const bottomSheetContent = document.getElementById('resultsBottomSheetContent');
+
+            resultsDiv.innerHTML = htmlContent;
+            bottomSheetContent.innerHTML = htmlContent;
+
+            // Show results panel on desktop
+            if (!isMobileView()) {
+                document.getElementById('resultsPanel').classList.add('show');
+                document.querySelector('.main-content').classList.add('with-results');
+            } else {
+                // On mobile, show bottom sheet and switch to route tab
+                openBottomSheet();
+            }
+        }
+
         function initMap() {
             try {
                 map = new google.maps.Map(document.getElementById('map'), {
@@ -503,6 +807,15 @@
                 document.getElementById('map').innerHTML = '<div style="padding: 20px; text-align: center;"><h3 style="color: #e74c3c;">Google Maps Error</h3><p style="color: #7f8c8d;">Unable to load Google Maps. Please check the API key and ensure all required APIs are enabled.</p><p style="color: #7f8c8d; font-size: 0.85rem; margin-top: 10px;">Required APIs: Maps JavaScript API, Directions API, Distance Matrix API, Geocoding API</p></div>';
             }
         }
+
+        // Make initMap globally accessible for Google Maps callback
+        window.initMap = initMap;
+
+        // Make other functions globally accessible for onclick handlers
+        window.switchMobileTab = switchMobileTab;
+        window.toggleSidebar = toggleSidebar;
+        window.openBottomSheet = openBottomSheet;
+        window.closeBottomSheet = closeBottomSheet;
 
         function geocodeAddress(address) {
             return new Promise((resolve, reject) => {
@@ -612,10 +925,12 @@
             updateAddressList();
             clearMap();
 
-            // Hide results panel
+            // Hide results panel and bottom sheet
             document.getElementById('resultsPanel').classList.remove('show');
             document.querySelector('.main-content').classList.remove('with-results');
             document.getElementById('results').innerHTML = '';
+            document.getElementById('resultsBottomSheetContent').innerHTML = '';
+            closeBottomSheet();
 
             document.getElementById('startAddress').value = '';
             document.getElementById('endAddress').value = '';
@@ -953,13 +1268,8 @@
                 </div>
             `;
 
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = resultsHTML;
-            resultsDiv.classList.remove('empty');
-
-            // Show results panel
-            document.getElementById('resultsPanel').classList.add('show');
-            document.querySelector('.main-content').classList.add('with-results');
+            updateResults(resultsHTML);
+            document.getElementById('results').classList.remove('empty');
         }
 
         function optimizeWithBoth(waypoints, optimizationMatrix) {
@@ -1299,13 +1609,8 @@
             }
 
             clearMap();
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.classList.remove('empty');
-            resultsDiv.innerHTML = '<div class="loading">⚙️ Optimizing route with real-time traffic data...</div>';
-
-            // Show results panel
-            document.getElementById('resultsPanel').classList.add('show');
-            document.querySelector('.main-content').classList.add('with-results');
+            updateResults('<div class="loading">⚙️ Optimizing route with real-time traffic data...</div>');
+            document.getElementById('results').classList.remove('empty');
             
             let startAddr = document.getElementById('startAddress').value.trim();
             let endAddr = document.getElementById('endAddress').value.trim();
@@ -1399,11 +1704,15 @@
             
             try {
                 await displayRoute(optimized, durationMatrix, distanceMatrix);
+
+                // On mobile, switch to map tab to show the route
+                if (isMobileView()) {
+                    switchMobileTab('map');
+                }
             } catch (error) {
                 console.error('Error displaying route:', error);
-                const resultsDiv = document.getElementById('results');
-                resultsDiv.classList.remove('empty');
-                resultsDiv.innerHTML = `<div style="color: #e74c3c; text-align: center; padding: 20px;"><strong>⚠️ Error</strong><br/>${error.message}</div>`;
+                updateResults(`<div style="color: #e74c3c; text-align: center; padding: 20px;"><strong>⚠️ Error</strong><br/>${error.message}</div>`);
+                document.getElementById('results').classList.remove('empty');
             }
         }
 
