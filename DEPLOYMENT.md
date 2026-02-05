@@ -1,6 +1,40 @@
 # Route Optimizer Deployment Guide
 
-This app can be deployed to multiple platforms. Python version is specified in `.python-version` file (compatible with Render, Northflank, Railway, and most modern platforms).
+This app can be deployed to multiple platforms using either:
+- **Docker** (recommended) - `Dockerfile` included
+- **Buildpack** - Uses `.python-version` file
+
+---
+
+## 🐳 Docker Deployment (Universal)
+
+### Local Testing with Docker
+
+Test the Docker build locally before deploying:
+
+```bash
+# Build the image
+docker build -t route-optimizer .
+
+# Run the container
+docker run -p 8080:8080 route-optimizer
+
+# Open in browser
+# http://localhost:8080
+```
+
+### Deploy with Docker to Any Platform
+
+The included `Dockerfile` works with:
+- Northflank
+- Render (Docker)
+- Railway
+- Google Cloud Run
+- AWS ECS/Fargate
+- Azure Container Instances
+- DigitalOcean App Platform
+
+---
 
 ## Deploy to Render (Free)
 
@@ -39,8 +73,13 @@ This app can be deployed to multiple platforms. Python version is specified in `
    - Select the branch (main)
 
 3. **Configure Settings**
-   
-   **Build & Deploy**:
+
+   **Option A: Docker (Recommended)**
+   - Environment: `Docker`
+   - Render will auto-detect the Dockerfile
+   - Port: `8080` (auto-detected)
+
+   **Option B: Python (Buildpack)**
    - Runtime: `Python 3`
    - Build Command: `pip install -r requirements.txt`
    - Start Command: `python app.py`
@@ -49,9 +88,9 @@ This app can be deployed to multiple platforms. Python version is specified in `
    - Instance Type: `Free`
    - Region: Choose closest to your users
 
-4. **Set Environment Variables** (Optional but recommended)
+4. **Set Environment Variables** (Optional)
    - Add `FLASK_ENV=production`
-   - Add `FLASK_DEBUG=0`
+   - Add `FLASK_DEBUG=False`
 
 5. **Deploy**
    - Click "Create Web Service"
@@ -91,25 +130,38 @@ This app can be deployed to multiple platforms. Python version is specified in `
 
 ---
 
-## Alternative: Deploy to Northflank
+## Alternative: Deploy to Northflank (Docker)
+
+### Method 1: Using Dockerfile (Recommended)
 
 1. Go to https://northflank.com
 2. Create an account and new project
 3. Click "Add Service" → "Combined Service"
 4. Connect your GitHub repository
 5. Configure:
+   - **Build Type**: Dockerfile
+   - **Dockerfile Path**: `Dockerfile` (default)
+   - **Port**: `8080`
+6. Add environment variables (optional):
+   ```
+   FLASK_ENV=production
+   FLASK_DEBUG=False
+   ```
+7. Click "Create Service" and deploy
+
+### Method 2: Using Buildpack
+
+If you prefer buildpack deployment:
+1. Follow steps 1-4 above
+2. Configure:
    - **Build Type**: Buildpack
    - **Python Version**: Auto-detected from `.python-version` (3.9.19)
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `python app.py`
-6. Add environment variables:
-   ```
-   PORT=8080
-   FLASK_ENV=production
-   ```
-7. Deploy
+   - **Port**: `8080`
+3. Deploy
 
-**Note**: Northflank uses `.python-version` file (not `runtime.txt`) to detect Python version.
+**Note**: Docker deployment is more reliable and portable across platforms.
 
 ---
 

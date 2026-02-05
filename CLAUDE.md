@@ -22,10 +22,14 @@ pip install -r requirements.txt
 Dependencies: Flask 2.0+, requests 2.28+
 
 ### Deployment
-The app is configured for multiple deployment platforms (see DEPLOYMENT.md for full guide):
+The app supports multiple deployment methods (see DEPLOYMENT.md for full guide):
+- `Dockerfile`: Docker containerization (recommended, works everywhere)
+- `.dockerignore`: Excludes unnecessary files from Docker build
 - `Procfile`: Defines the web process (for Heroku-style platforms)
-- `.python-version`: Specifies Python 3.9.19 (compatible with Render, Northflank, Railway)
+- `.python-version`: Specifies Python 3.9.19 (for buildpack deployments)
 - Environment variables: `FLASK_ENV`, `FLASK_DEBUG`, `PORT`
+
+Docker deployment works on: Northflank, Render, Railway, Google Cloud Run, AWS, Azure
 
 ## Architecture
 
