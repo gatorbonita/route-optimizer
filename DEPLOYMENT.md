@@ -1,5 +1,7 @@
 # Route Optimizer Deployment Guide
 
+This app can be deployed to multiple platforms. Python version is specified in `.python-version` file (compatible with Render, Northflank, Railway, and most modern platforms).
+
 ## Deploy to Render (Free)
 
 ### Step 1: Prepare Your Code
@@ -86,6 +88,28 @@
 
 - View logs in Render Dashboard → Your Service → Logs
 - Monitor usage in Dashboard → Metrics
+
+---
+
+## Alternative: Deploy to Northflank
+
+1. Go to https://northflank.com
+2. Create an account and new project
+3. Click "Add Service" → "Combined Service"
+4. Connect your GitHub repository
+5. Configure:
+   - **Build Type**: Buildpack
+   - **Python Version**: Auto-detected from `.python-version` (3.9.19)
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python app.py`
+6. Add environment variables:
+   ```
+   PORT=8080
+   FLASK_ENV=production
+   ```
+7. Deploy
+
+**Note**: Northflank uses `.python-version` file (not `runtime.txt`) to detect Python version.
 
 ---
 

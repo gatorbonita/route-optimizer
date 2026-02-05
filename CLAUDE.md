@@ -22,9 +22,9 @@ pip install -r requirements.txt
 Dependencies: Flask 2.0+, requests 2.28+
 
 ### Deployment
-The app is configured for Render deployment (see DEPLOYMENT.md for full guide):
-- `Procfile`: Defines the web process
-- `runtime.txt`: Specifies Python 3.9.19
+The app is configured for multiple deployment platforms (see DEPLOYMENT.md for full guide):
+- `Procfile`: Defines the web process (for Heroku-style platforms)
+- `.python-version`: Specifies Python 3.9.19 (compatible with Render, Northflank, Railway)
 - Environment variables: `FLASK_ENV`, `FLASK_DEBUG`, `PORT`
 
 ## Architecture
