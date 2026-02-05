@@ -1,0 +1,28 @@
+name: Deploy to Northflank
+
+# Trigger deployment on push to main branch
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Trigger Northflank Build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Trigger Northflank Deployment
+        run: |
+          echo "Triggering Northflank deployment..."
+          curl -X POST "${{ secrets.NORTHFLANK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{}'
+
+      - name: Deployment Triggered
+        run: |
+          echo "✅ Deployment triggered successfully!"
+          echo "Check Northflank dashboard for build status."
