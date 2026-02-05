@@ -950,7 +950,7 @@
                         departureTime: new Date(),
                         trafficModel: google.maps.TrafficModel.BEST_GUESS
                     },
-                    unitSystem: google.maps.UnitSystem.METRIC
+                    unitSystem: google.maps.UnitSystem.IMPERIAL  // Use miles for USA
                 };
 
                 distanceMatrixService.getDistanceMatrix(request, (response, status) => {
@@ -982,9 +982,9 @@
                             row.forEach((duration, j) => {
                                 if (duration !== null && i !== j) {
                                     const distMeters = distances[i][j];
-                                    const distKm = (distMeters / 1000).toFixed(1);
+                                    const distMiles = (distMeters / 1609.34).toFixed(1);
                                     const minutes = Math.round(duration / 60);
-                                    console.log(`  [${i}]→[${j}]: TIME=${duration}s (${minutes}m) | DIST=${distMeters}m (${distKm}km)`);
+                                    console.log(`  [${i}]→[${j}]: TIME=${duration}s (${minutes}m) | DIST=${distMeters}m (${distMiles}mi)`);
                                 }
                             });
                         });
@@ -1204,7 +1204,7 @@
             const hours = Math.floor(totalDuration / 3600);
             const minutes = Math.floor((totalDuration % 3600) / 60);
             const timeStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-            const distanceStr = (totalDistance / 1000).toFixed(1);
+            const distanceStr = (totalDistance / 1609.34).toFixed(1);  // Convert meters to miles
             
             let routeDetails = '';
             for (let i = 0; i < optimized.length - 1; i++) {
@@ -1235,7 +1235,7 @@
                         <span>${current.address}</span>
                     </div>
                     <div class="route-leg-info">
-                        ↓ ${(distance / 1000).toFixed(1)} km, ${durStr} <span class="traffic-badge ${trafficClass}">Live Traffic</span>
+                        ↓ ${(distance / 1609.34).toFixed(1)} mi, ${durStr} <span class="traffic-badge ${trafficClass}">Live Traffic</span>
                     </div>
                 `;
             }
@@ -1252,7 +1252,7 @@
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 15px;">
                         <div style="flex: 1;">
                             <p style="margin: 0 0 3px 0; font-size: 0.75rem; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px;">Distance</p>
-                            <p style="margin: 0; font-size: 1.4rem; font-weight: 700; color: #27ae60;">${distanceStr} km</p>
+                            <p style="margin: 0; font-size: 1.4rem; font-weight: 700; color: #27ae60;">${distanceStr} mi</p>
                         </div>
                         <div style="width: 2px; height: 40px; background: linear-gradient(to bottom, #e8e8e8, #f5f5f5);"></div>
                         <div style="flex: 1;">
@@ -1698,9 +1698,9 @@
                 const idx2 = optimized[i + 1].matrixIndex;
                 finalDuration += durationMatrix[idx1][idx2];
                 finalDistance += distanceMatrix[idx1][idx2];
-                console.log(`${i}→${i+1}: ${optimized[i].address} to ${optimized[i+1].address}: ${durationMatrix[idx1][idx2]}s (${Math.round(durationMatrix[idx1][idx2]/60)}m), ${(distanceMatrix[idx1][idx2]/1000).toFixed(1)}km`);
+                console.log(`${i}→${i+1}: ${optimized[i].address} to ${optimized[i+1].address}: ${durationMatrix[idx1][idx2]}s (${Math.round(durationMatrix[idx1][idx2]/60)}m), ${(distanceMatrix[idx1][idx2]/1609.34).toFixed(1)}mi`);
             }
-            console.log('TOTAL:', finalDuration + 's (' + Math.round(finalDuration/60) + 'm),', (finalDistance/1000).toFixed(1) + 'km');
+            console.log('TOTAL:', finalDuration + 's (' + Math.round(finalDuration/60) + 'm),', (finalDistance/1609.34).toFixed(1) + 'mi');
             
             try {
                 await displayRoute(optimized, durationMatrix, distanceMatrix);

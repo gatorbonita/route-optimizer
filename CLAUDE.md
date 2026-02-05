@@ -103,7 +103,7 @@ Billing must be enabled in Google Cloud Platform.
 ## Important Notes
 
 - All optimization runs client-side; no backend computation
-- The app uses metric units (kilometers, meters)
+- The app uses imperial units (miles, feet) for USA
 - Distance Matrix API has quota: 100k elements/day on free tier
 - Route optimization is suitable for 5-15 locations; larger routes may need advanced algorithms
 - Recent commit (9ea5347) simplified optimization to use array indices directly instead of id mapping
